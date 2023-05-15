@@ -1,3 +1,25 @@
+#include <BluetoothSerial.h>
+#include <BTAddress.h>
+#include <BTAdvertisedDevice.h>
+#include <BTScan.h>
+
+#include "BluetoothSerial.h"
+
+//#define USE_PIN //시큐어핀 여부
+const char *pin = "1234";
+
+String device_name = "Golden_Glove_RIGHT";
+
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+#if !defined(CONFIG_BT_SPP_ENABLED)
+#error Serial Bluetooth not available or not enabled. It is only available for the ESP32 chip.
+#endif
+
+BluetoothSerial SerialBT;
+
 //Constants:
 const int flexPin1 = 32; // 32
 const int flexPin2 = 33; // 33
@@ -12,8 +34,16 @@ int value3, max_value3, min_value3;
 int value4, max_value4, min_value4; 
 int value5, max_value5, min_value5; 
 
-void setup(){
-  Serial.begin(115200);       //Begin serial communication
+void setup() {
+  Serial.begin(115200);
+  SerialBT.begin(device_name); //Bluetooth device name
+  Serial.printf("The device with name \"%s\" is started.\nNow you can pair it with Bluetooth!\n", device_name.c_str());
+  //Serial.printf("The device with name \"%s\" and MAC address %s is started.\nNow you can pair it with Bluetooth!\n", device_name.c_str(), SerialBT.getMacString()); // Use this after the MAC method is implemented
+  #ifdef USE_PIN
+    SerialBT.setPin(pin);
+    Serial.println("Using PIN");
+  #endif
+
   max_value1 = analogRead(flexPin1);         
   max_value2 = analogRead(flexPin2);         
   max_value3 = analogRead(flexPin3);         
@@ -23,11 +53,11 @@ void setup(){
   min_value1 = 500;
   min_value2 = 500;
   min_value3 = 500;
-  min_value4 = 500;
-  min_value5 = 600;  
+  min_value4 = 400;
+  min_value5 = 200;  
 }
 
-void loop(){
+void loop() {
   value1 = map(analogRead(flexPin1), min_value1, max_value1, 0, 3);         
   value2 = map(analogRead(flexPin2), min_value2, max_value2, 0, 3);         
   value3 = map(analogRead(flexPin3), min_value3, max_value3, 0, 3);         
@@ -40,15 +70,8 @@ void loop(){
   String tmp_msg4 = String(value4)+ ","; //VN
   String tmp_msg5 = String(value5)+ "/"; //VP / 는 전송 구분자
   String message = tmp_msg1 + tmp_msg2 + tmp_msg3 + tmp_msg4 + tmp_msg5;
-  Serial.println(message);   
-
-
-  String v1 = String(analogRead(flexPin1))+",";         
-  String v2 = String(analogRead(flexPin2))+",";         
-  String v3 = String(analogRead(flexPin3))+",";         
-  String v4 = String(analogRead(flexPin4))+",";         
-  String v5 = String(analogRead(flexPin5))+"/"; 
-  Serial.println(v1+v2+v3+v4+v5);  
-
-  delay(1000);                          
+  SerialBT.print(message);
+  Serial.println(message);
+  
+  delay(20);
 }
