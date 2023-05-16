@@ -73,5 +73,5 @@ void loop() {
   SerialBT.print(message);
   Serial.println(message);
   
-  delay(20);
+  delay(200);
 }
